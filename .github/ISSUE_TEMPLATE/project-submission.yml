@@ -1,0 +1,81 @@
+name: Submit a project
+description: Suggest an open-source project for human review. Submissions are never automatically published.
+title: "[Project]: "
+body:
+  - type: markdown
+    attributes:
+      value: "Share public source with a recognized open-source license and clear ownership. No malware, misleading installers, piracy, or illegal redistribution. Maintained or useful projects are preferred. Do not include secrets or private contact information."
+  - type: input
+    id: project-name
+    attributes:
+      label: Project name
+    validations:
+      required: true
+  - type: input
+    id: repository
+    attributes:
+      label: GitHub repository URL
+      placeholder: https://github.com/your-account/your-project
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What does it do, who is it for, and what is its current release status?
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        [Desktop, AI Tools, CLI / Utilities, Web, Developer Tools, Mobile]
+    validations:
+      required: true
+  - type: input
+    id: stack
+    attributes:
+      label: Tech stack
+    validations:
+      required: true
+  - type: dropdown
+    id: platforms
+    attributes:
+      label: Supported platforms
+      multiple: true
+      options: [Windows, Linux, macOS, Android, iOS, Web]
+    validations:
+      required: true
+  - type: input
+    id: license
+    attributes:
+      label: License
+      description: SPDX identifier and link to the repository license.
+    validations:
+      required: true
+  - type: input
+    id: demo
+    attributes:
+      label: Demo URL (optional)
+  - type: input
+    id: release
+    attributes:
+      label: Download or release URL (optional)
+      description: Link to actual published assets; do not guess filenames.
+  - type: input
+    id: contact
+    attributes:
+      label: Maintainer contact (optional)
+      description: A public GitHub handle is enough. Issues are public.
+  - type: checkboxes
+    id: policy
+    attributes:
+      label: Submission policy
+      options:
+        - label: Source is public, the license is open source, and ownership and attribution are clear.
+          required: true
+        - label: This project contains no malware, misleading installers, piracy, or illegal redistribution.
+          required: true
+        - label: I understand a maintainer reviews the submission and approves any catalog addition through a reviewed pull request.
+          required: true

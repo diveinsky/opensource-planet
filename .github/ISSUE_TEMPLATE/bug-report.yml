@@ -1,0 +1,17 @@
+name: Bug report
+description: Report a problem with the website or catalog.
+title: "[Bug]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include the affected project or page, browser, device, and expected behavior. Never include credentials.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true

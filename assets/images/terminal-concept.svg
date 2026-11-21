@@ -1,0 +1,48 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="720"
+  height="300"
+  viewBox="0 0 720 300"
+>
+  <defs>
+    <radialGradient id="g">
+      <stop stop-color="#edbd8a" stop-opacity=".15" />
+      <stop offset="1" stop-color="#11161e" />
+    </radialGradient>
+  </defs>
+  <rect width="720" height="300" fill="#11161e" />
+  <rect width="720" height="300" fill="url(#g)" />
+  <g font-family="monospace">
+    <rect
+      x="135"
+      y="35"
+      width="485"
+      height="250"
+      rx="10"
+      fill="#10151d"
+      stroke="#394151"
+    />
+    <path d="M135 68H620" stroke="#394151" />
+    <circle cx="153" cy="52" r="3" fill="#a57687" />
+    <circle cx="165" cy="52" r="3" fill="#b7aa75" />
+    <circle cx="177" cy="52" r="3" fill="#88ac89" />
+    <text x="400" y="56" text-anchor="middle" fill="#818ea3" font-size="11">
+      Device Diagnostics · concept study
+    </text>
+    <text x="180" y="100" fill="#edbd8a" font-size="15">
+      $ device-diagnostics
+    </text>
+    <text x="180" y="132" fill="#8a97a5" font-size="15">
+      concept / not released
+    </text>
+    <text x="180" y="164" fill="#edbd8a" font-size="15">
+      network ........ planned
+    </text>
+    <text x="180" y="196" fill="#8a97a5" font-size="15">
+      devices ........ planned
+    </text>
+    <text x="180" y="228" fill="#edbd8a" font-size="15">
+      reports ........ planned
+    </text>
+  </g>
+</svg>

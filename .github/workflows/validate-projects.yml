@@ -1,0 +1,44 @@
+name: Validate project catalog
+on:
+  pull_request:
+    paths:
+      - projects.json
+      - schema.js
+      - app.js
+      - assets/**
+      - scripts/**
+      - tests/**
+      - .github/workflows/validate-projects.yml
+  push:
+    branches: [main]
+    paths:
+      - projects.json
+      - schema.js
+      - app.js
+      - assets/**
+      - scripts/**
+      - tests/**
+      - .github/workflows/validate-projects.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Check JavaScript syntax
+        run: |
+          node --check app.js
+          node --check schema.js
+          node --check scripts/validate-projects.mjs
+      - name: Test catalog rules and link classification
+        run: node --test tests/catalog.test.mjs
+      - name: Validate project data and release links
+        run: node scripts/validate-projects.mjs --check-links
