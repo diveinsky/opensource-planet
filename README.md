@@ -22,6 +22,7 @@ Open `http://localhost:8000/`. Do not double-click `index.html`: fetching JSON r
 - `projects.json`: all project content, using the versioned envelope below.
 - `schema.js`: shared browser/CI rules and pure search/filter/sort logic.
 - `assets/images/`, `assets/icons/`: original local concept illustrations and icons.
+- `scripts/sync-projects.mjs`, `scripts/publish-synced-catalog.mjs`: manual import and workflow publication; `sync.config.json` holds the account/topic.
 - `scripts/validate-projects.mjs`, `tests/`: dependency-free validation and tests; optional browser regression script.
 - `.github/`: validation workflow, submission/bug/feature forms, PR template.
 - `_headers`: additional Cloudflare security headers; HTML contains a CSP for GitHub Pages too.
@@ -44,6 +45,88 @@ Edit `CONFIG` at the top of `app.js`:
 
 Verify the inferred GitHub identity before publishing. No other configuration is required. Sponsorship remains unavailable until explicitly configured; no payment data or API keys are collected. Complete GitHub Sponsors onboarding separately, then optionally add `.github/FUNDING.yml` with your approved handle. Software remains free. BYOK means provider credentials belong inside the individual application and provider usage may incur charges.
 
+## Manual GitHub sync (recommended for your own projects)
+
+No scheduled or push-triggered sync is configured. Listings refresh only when you run the command or manually dispatch the workflow. You do not maintain a central entry for every project.
+
+### Choose what appears
+
+1. In each public project repository, open **About → settings gear → Topics** and add `opensource-planet`.
+2. Add a recognized open-source license. Repositories without a license from the approved SPDX list in `schema.js` are skipped with a clear log message.
+3. Set the About description and Website URL; publish an actual GitHub Release and upload installers when available.
+4. Trigger a sync whenever you want to update the website.
+
+`sync.config.json` sets the account (`diveinsky`) and topic (`opensource-planet`) once. Sync uses the public user-repository API, then rechecks ownership, public status, and the exact topic. It never imports repositories from another account or private repositories, even when an authenticated token can access them. Forks are eligible only when explicitly tagged and owned by the configured account.
+
+The generated catalog **replaces** `projects.json`: it is a snapshot of the eligible tagged projects, not a merge with old samples or manual entries. Removing the topic removes a listing at the next sync. Making a repository private also takes effect at the next sync; there is no background polling. The four existing drafts remain until your first successful sync. If no eligible projects are found, sync stops without changing the catalog; deliberately clearing it requires `--allow-empty` or the workflow's matching checkbox.
+
+### Run from your terminal
+
+```sh
+# Preview without changing any files
+node scripts/sync-projects.mjs --dry-run
+
+# Fetch metadata and replace projects.json
+node scripts/sync-projects.mjs
+node scripts/validate-projects.mjs --check-links
+
+git add projects.json
+git commit -m "Sync GitHub projects"
+git push origin main
+```
+
+No token is required for public metadata, but GitHub's unauthenticated rate limits apply. If needed, supply `GH_TOKEN` through your existing shell/credential environment; never put credentials in configuration files, frontend code, command arguments, or commits. API failures, malformed metadata, schema errors, normalization collisions, and rate limits abort before the local file is replaced. `--dry-run` prints the selected projects and never modifies the catalog.
+
+### Run from GitHub's website
+
+After this implementation is pushed to the default branch:
+
+1. Open **Actions → Sync projects (manual) → Run workflow**.
+2. Select the default branch and leave **allow_empty** unchecked unless you intend to clear the catalog.
+3. Click **Run workflow**. It fetches metadata, validates links/schema, and commits only `projects.json` if its content changed.
+4. For GitHub Pages configured as **Deploy from a branch → default branch → /(root)**, it explicitly requests a rebuild. Check the Pages deployment status afterward; a requested build is not a completed deployment.
+
+The manual workflow uses GitHub's automatic `GITHUB_TOKEN` with `contents: write` and `pages: write`; no personal token or frontend secret is needed. Checkout credentials are not persisted. The workflow is restricted to the default branch and serialized to avoid competing syncs. It refuses to overwrite a catalog modified during the run. Protected branches may require the local command followed by a normal PR instead of the workflow's direct commit.
+
+If Pages is not configured, the workflow saves the catalog and explains that hosting setup is needed. If Pages uses a different branch, `/docs`, or a custom Actions deployment, the catalog is saved but the run reports that a separate deployment is needed; it never silently changes hosting settings. Connected Cloudflare Pages can deploy the catalog commit through its existing Git integration. GitHub's bot commits do not automatically trigger every other Actions workflow, so this workflow validates before committing and explicitly requests the supported Pages rebuild itself.
+
+### What sync derives
+
+| Website content                | GitHub source                                                                                                  |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| Name, description, source code | Repository metadata                                                                                            |
+| Demo                           | HTTPS Website field in About                                                                                   |
+| License                        | GitHub-detected SPDX identifier                                                                                |
+| Tags                           | Primary language and repository topics                                                                         |
+| Category                       | `desktop`, `ai-tools`/`ai`, `cli`, `developer-tools`, `web`, or `mobile` topic; Developer Tools is the default |
+| Spotlight / BYOK               | `planet-featured` / `byok` topic                                                                               |
+| Platforms                      | `windows`, `linux`, `macos`, `android`, `ios`, `web` topics and recognized release asset formats/names         |
+| Version, date, notes           | Latest stable published release; drafts/prereleases are excluded                                               |
+| Downloads                      | Actual uploaded assets and GitHub's provided source archive URL                                                |
+
+Repositories without a stable release are marked development and get a source link, with no download choices. Source-only releases use the **Source** platform. The sync identifies EXE/MSI, AppImage/DEB/RPM, DMG/PKG, and APK packages by format. ZIP files need an unambiguous platform in their filename or optional mapping; it does not guess that a generic ZIP runs on Windows. Unrecognized packages remain accessible through **All Releases**. CPU architecture is inferred only from clear filename markers; otherwise it is shown as “Not specified.” Release files are never executed.
+
+### Optional per-project customization
+
+Most repositories need no extra file. If desired, add `.opensource-planet.json` to the project's default branch:
+
+```json
+{
+  "name": "Friendly project name",
+  "category": "Desktop",
+  "platforms": ["Windows", "Linux"],
+  "featured": true,
+  "byok": false,
+  "documentation": "https://your-actual-docs-host/path",
+  "screenshots": ["https://your-actual-image-host/screenshot.png"],
+  "assetPlatforms": {
+    "exact-uploaded-asset.zip": { "platform": "Windows", "architecture": "x64" }
+  }
+}
+```
+
+Use real HTTPS URLs and actual uploaded asset names. Supported optional fields are name, description, category, platforms, featured, byok, documentation, screenshots and assetPlatforms. This file can customize display details but cannot replace GitHub-provided repository/download URLs, public/topic eligibility, or license requirements. No README parsing, remote scripts, or project binaries are executed. Screenshots require HTTPS URLs, not paths relative to the catalog repository.
+
 ## Add or update a project
 
 Use exactly one top-level format:
@@ -63,7 +146,7 @@ Copy an existing record in `projects.json`, assign unique lowercase hyphenated `
 | `longDescription`, `icon`               | Optional plain text; description and generic icon are fallbacks.                         |
 | `category`                              | Desktop, AI Tools, CLI / Utilities, Web, Developer Tools, Mobile                         |
 | `tags`                                  | Array of nonempty strings                                                                |
-| `platforms`                             | Array: Windows, Linux, macOS, Android, iOS, Web; drafts indicate plans                   |
+| `platforms`                             | Array: Windows, Linux, macOS, Android, iOS, Web, Source; drafts indicate plans           |
 | `status`                                | `draft`, `development`, `released`, `archived`                                           |
 | `featured`, `byok`                      | Required booleans; first two featured records appear in the spotlight                    |
 | `license`                               | An approved SPDX identifier from `schema.js`; empty allowed for unreleased concepts only |
@@ -90,7 +173,7 @@ The browser validates records, skips malformed/duplicate entries, and warns when
 7. Set `status: "released"`, real `version`, `releasedAt`, `license`, repository, and screenshots. Provide documentation and release notes where available. Remove a concept `preview` when replacing it with screenshots.
 8. Run validation and open a reviewed PR. Entries without downloadable assets show **View Repository** in the detail dialog. All Releases is available when a repository exists. Nothing auto-executes.
 
-Latest Releases uses **maintainer-curated JSON**, sorted by release date. No live API calls or tokens are used. Update metadata and check links after each release, particularly if filenames change.
+Latest Releases reads the saved JSON, sorted by release date. The browser makes no GitHub API calls and receives no tokens. Update metadata with a manual sync after publishing a release, or maintain entries manually if you are not using sync.
 
 ## Submit and review
 
@@ -104,11 +187,11 @@ A maintainer checks public source, recognized license, attribution, release stat
 node --check app.js
 node --check schema.js
 node --check scripts/validate-projects.mjs
-node --test tests/catalog.test.mjs
+node --test tests/catalog.test.mjs tests/sync.test.mjs
 node scripts/validate-projects.mjs --check-links
 ```
 
-If a sandbox prevents Node's isolated test subprocess, use `node --test --test-isolation=none tests/catalog.test.mjs` (Node 24).
+If a sandbox prevents Node's isolated test subprocess, use `node --test --test-isolation=none tests/catalog.test.mjs tests/sync.test.mjs` (Node 24).
 
 CI runs on relevant pull requests, main-branch pushes, and manual dispatch with `contents: read`, no persisted checkout credentials, and no dependencies to install. It checks JSON, the shared schema, duplicate identities, SPDX allowlist, local images and configured external URLs. HTTP 404/410 fails; 401/403/429, server errors, timeouts, and network failures warn for manual review. Other unusual statuses also warn. HEAD is used first with a minimal ranged GET fallback for servers that reject HEAD; binaries are never executed. A successful check is not an antivirus or ownership guarantee. Protect `main` and require review plus the validation check in GitHub settings; repository code cannot enforce those settings itself.
 
@@ -148,4 +231,4 @@ Official guides: [Static HTML](https://developers.cloudflare.com/pages/framework
 - Subpath 404s: deploy files at the publishing root and retain relative paths. Navigation uses hashes, not server routes.
 - Restricted browser storage: theme still toggles, but may not persist. External images, if added, make a request to their host; local assets are preferred.
 - External checks inconclusive: inspect logs and check links manually later; a warning is not verification.
-- No live release API, download counts, user accounts, automatic publication, tracking or backend. Only real project maintainers can supply future release artifacts.
+- No browser-side release API calls, download counts, user accounts, scheduled sync, tracking or backend. Manual workflow dispatch can publish your selected projects. Only real project maintainers can supply future release artifacts.

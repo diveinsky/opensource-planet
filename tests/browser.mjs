@@ -29,6 +29,16 @@ function verify(value, message) {
 }
 try {
   await mkdir("artifacts", { recursive: true });
+  // Stable UI fixtures keep regression checks independent of your live project selection.
+  const fixtureCatalog = JSON.parse(
+    await readFile(new URL("./fixtures/catalog.json", import.meta.url)),
+  );
+  await page.route("**/projects.json", (route) =>
+    route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify(fixtureCatalog),
+    }),
+  );
   await page.goto(base);
   await page.waitForFunction(
     () =>
@@ -196,7 +206,7 @@ try {
   verify(failedRequests.length === 0, "no local 404s");
   // Intercept only test responses: synthetic fixtures never enter projects.json.
   const catalog = JSON.parse(
-    await readFile(new URL("../projects.json", import.meta.url)),
+    await readFile(new URL("./fixtures/catalog.json", import.meta.url)),
   );
   const fixture = {
     ...catalog.projects[0],

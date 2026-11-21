@@ -1,0 +1,45 @@
+name: Sync projects (manual)
+on:
+  workflow_dispatch:
+    inputs:
+      allow_empty:
+        description: "Allow clearing the catalog when no eligible public tagged projects exist"
+        type: boolean
+        default: false
+permissions:
+  contents: write
+  pages: write
+concurrency:
+  group: manual-project-sync
+  cancel-in-progress: false
+jobs:
+  sync:
+    if: github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Test sync and catalog rules
+        run: node --test tests/catalog.test.mjs tests/sync.test.mjs
+      - name: Fetch public topic-tagged projects
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ALLOW_EMPTY: ${{ inputs.allow_empty }}
+        run: |
+          if [ "$ALLOW_EMPTY" = 'true' ]; then
+            node scripts/sync-projects.mjs --allow-empty
+          else
+            node scripts/sync-projects.mjs
+          fi
+      - name: Validate generated catalog and links
+        run: node scripts/validate-projects.mjs --check-links
+      - name: Save catalog and request Pages rebuild
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SYNC_BRANCH: ${{ github.event.repository.default_branch }}
+        run: node scripts/publish-synced-catalog.mjs

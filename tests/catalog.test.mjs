@@ -11,8 +11,11 @@ const {
   safeURL,
   imageURL,
 } = require("../schema.js");
-const catalog = JSON.parse(
+const actualCatalog = JSON.parse(
   await readFile(new URL("../projects.json", import.meta.url)),
+);
+const catalog = JSON.parse(
+  await readFile(new URL("./fixtures/catalog.json", import.meta.url)),
 );
 const draft = catalog.projects[0];
 // Test-only synthetic record, never shipped or advertised in the website catalog.
@@ -28,7 +31,7 @@ const released = {
   repository: "https://github.com/test-owner/test-fixture",
 };
 test("the actual catalog passes all rules", () =>
-  assert.deepEqual(validateCatalog(catalog), []));
+  assert.deepEqual(validateCatalog(actualCatalog), []));
 test("rejects invalid roots, duplicate identities and duplicate repositories", () => {
   assert.ok(validateCatalog([]).length);
   assert.ok(

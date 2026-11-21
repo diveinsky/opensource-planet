@@ -9,7 +9,15 @@
     "Developer Tools",
     "Mobile",
   ];
-  const platforms = ["Windows", "Linux", "macOS", "Android", "iOS", "Web"];
+  const platforms = [
+    "Windows",
+    "Linux",
+    "macOS",
+    "Android",
+    "iOS",
+    "Web",
+    "Source",
+  ];
   const statuses = ["released", "development", "draft", "archived"];
   // Deliberate approved SPDX subset. Extend through a reviewed PR when needed.
   const licenses = [

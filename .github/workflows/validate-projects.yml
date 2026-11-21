@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - projects.json
+      - sync.config.json
+      - .github/workflows/sync-projects.yml
       - schema.js
       - app.js
       - assets/**
@@ -13,6 +15,8 @@ on:
     branches: [main]
     paths:
       - projects.json
+      - sync.config.json
+      - .github/workflows/sync-projects.yml
       - schema.js
       - app.js
       - assets/**
@@ -38,7 +42,9 @@ jobs:
           node --check app.js
           node --check schema.js
           node --check scripts/validate-projects.mjs
+          node --check scripts/sync-projects.mjs
+          node --check scripts/publish-synced-catalog.mjs
       - name: Test catalog rules and link classification
-        run: node --test tests/catalog.test.mjs
+        run: node --test tests/catalog.test.mjs tests/sync.test.mjs
       - name: Validate project data and release links
         run: node scripts/validate-projects.mjs --check-links

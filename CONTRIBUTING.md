@@ -17,6 +17,10 @@ Projects need publicly accessible source, a recognized open-source license, clea
 5. Review CI errors and all inconclusive link warnings manually. Review the actual diff, not just the green check. Require an independent reviewer where practical; configure branch protections and required checks in repository settings.
 6. Merge only after approval. The configured Pages service deploys the merged static files. No automatic merging is provided.
 
+## Owner-managed manual sync
+
+The maintainer may explicitly sync only public repositories owned by the account in `sync.config.json` and tagged `opensource-planet`. The command replaces the catalog with that selected set. There is no scheduled sync; the manual workflow may commit and request a Pages rebuild when deliberately run by someone with repository workflow access. Keep community suggestions under human review: issues never tag repositories, import projects, or trigger publication. Read the manual sync section in README before editing a generated catalog; the next sync replaces manual edits. An approved community project needs a separately chosen curation workflow or a future explicit owner allowlist change.
+
 ## Make changes
 
 Fork, create a focused branch, and run a local HTTP server as described in [README.md](README.md). Keep the buildless HTML/CSS/vanilla JavaScript structure. Share rules between browser and CI in `schema.js`. Use DOM creation and `textContent`, not untrusted HTML. Use HTTPS links and no credentials, trackers or runtime CDNs.
@@ -29,7 +33,7 @@ Run:
 node --check app.js
 node --check schema.js
 node --check scripts/validate-projects.mjs
-node --test tests/catalog.test.mjs
+node --test tests/catalog.test.mjs tests/sync.test.mjs
 node scripts/validate-projects.mjs --check-links
 ```
 
